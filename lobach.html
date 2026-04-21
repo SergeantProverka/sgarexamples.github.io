@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+<script src="js/aframe.min.js"></script>
+<script src="js/aframe-ar.js"></script>
+
+<body>
+    
+
+    <a-scene 
+        embedded 
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono;"
+        vr-mode-ui="enabled: false">
+        
+        <a-marker type="pattern" url="data/hiro.patt">
+            <!-- Сфера -->
+            <a-sphere radius="1" position="0 0 0" material="color: #88CCFF; transparent: true; opacity: 0.15;"></a-sphere>
+            <a-entity geometry="primitive: sphere; radius: 1; segmentsWidth: 32; segmentsHeight: 16;" 
+                      material="color: #336699; wireframe: true; transparent: true; opacity: 0.4;"></a-entity>
+            
+            <!-- Вершины треугольника -->
+            <a-sphere position="1 0 0" radius="0.06" material="color: red;"></a-sphere>
+            <a-sphere position="0 0 1" radius="0.06" material="color: green;"></a-sphere>
+            <a-sphere position="0.5 0.5 0.7" radius="0.06" material="color: blue;"></a-sphere>
+            
+            <!-- Стороны треугольника (линии) -->
+            <a-entity line__ab="start: 1 0 0; end: 0 0 1; color: #FF3333" 
+                      line="start: 1 0 0; end: 0 0 1; color: #FF3333"></a-entity>
+            <a-entity line__ac="start: 1 0 0; end: 0.5 0.5 0.7; color: #33FF33"
+                      line="start: 1 0 0; end: 0.5 0.5 0.7; color: #33FF33"></a-entity>
+            <a-entity line__bc="start: 0 0 1; end: 0.5 0.5 0.7; color: #3333FF"
+                      line="start: 0 0 1; end: 0.5 0.5 0.7; color: #3333FF"></a-entity>
+            
+            <!-- Подписи -->
+            <a-text value="A" color="red" align="center" position="1.15 -0.1 0" scale="0.3 0.3 0.3"></a-text>
+            <a-text value="B" color="green" align="center" position="-0.1 0 1.15" scale="0.3 0.3 0.3"></a-text>
+            <a-text value="C" color="blue" align="center" position="0.65 0.65 0.85" scale="0.3 0.3 0.3"></a-text>
+            
+            
+        </a-marker>
+        
+        <a-entity camera></a-entity>
+    </a-scene>
+</body>
+</html>
