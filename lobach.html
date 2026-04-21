@@ -1,41 +1,116 @@
 <!DOCTYPE html>
 <html>
-    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 <script src="js/aframe.min.js"></script>
 <script src="js/aframe-ar.js"></script>
-
 <body>
-    
+
+
+    <!-- Компонент для рисования дуги на сфере -->
+    <script>
+        AFRAME.registerComponent('sphere-arc', {
+            schema: {
+                start: {type: 'vec3'},
+                end: {type: 'vec3'},
+                color: {type: 'color', default: '#FF3333'},
+                radius: {type: 'number', default: 1},
+                thickness: {type: 'number', default: 0.02}
+            },
+            
+            update: function() {
+                var data = this.data;
+                var start = new THREE.Vector3(data.start.x, data.start.y, data.start.z).normalize();
+                var end = new THREE.Vector3(data.end.x, data.end.y, data.end.z).normalize();
+                var radius = data.radius;
+                
+                // Угол между векторами
+                var angle = Math.acos(Math.min(1, Math.max(-1, start.dot(end))));
+                
+                // Создаём дугу через промежуточные точки
+                var points = [];
+                var axis = new THREE.Vector3().crossVectors(start, end).normalize();
+                
+                for (var i = 0; i <= 30; i++) {
+                    var t = i / 30;
+                    var theta = angle * t;
+                    // Вращаем start вокруг оси на угол theta
+                    var q = new THREE.Quaternion().setFromAxisAngle(axis, theta);
+                    var point = start.clone().applyQuaternion(q).multiplyScalar(radius);
+                    points.push(point);
+                }
+                
+                // Создаём трубку по точкам
+                var curve = new THREE.CatmullRomCurve3(points);
+                var tubeGeometry = new THREE.TubeGeometry(curve, 40, data.thickness, 6, false);
+                var material = new THREE.MeshStandardMaterial({color: data.color, emissive: data.color, emissiveIntensity: 0.3});
+                var tube = new THREE.Mesh(tubeGeometry, material);
+                this.el.setObject3D('arc', tube);
+            }
+        });
+    </script>
 
     <a-scene 
         embedded 
         arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono;"
-        vr-mode-ui="enabled: false">
+        vr-mode-ui="enabled: false"
+        renderer="logarithmicDepthBuffer: true;">
         
         <a-marker type="pattern" url="data/hiro.patt">
-            <!-- Сфера -->
+            
+            <!-- Полупрозрачная сфера с сеткой (как на вашем скриншоте) -->
             <a-sphere radius="1" position="0 0 0" material="color: #88CCFF; transparent: true; opacity: 0.15;"></a-sphere>
-            <a-entity geometry="primitive: sphere; radius: 1; segmentsWidth: 32; segmentsHeight: 16;" 
-                      material="color: #336699; wireframe: true; transparent: true; opacity: 0.4;"></a-entity>
+            <a-entity geometry="primitive: sphere; radius: 1; segmentsWidth: 48; segmentsHeight: 24;" 
+                      material="color: #336699; wireframe: true; transparent: true; opacity: 0.35;"></a-entity>
             
-            <!-- Вершины треугольника -->
-            <a-sphere position="1 0 0" radius="0.06" material="color: red;"></a-sphere>
-            <a-sphere position="0 0 1" radius="0.06" material="color: green;"></a-sphere>
-            <a-sphere position="0.5 0.5 0.7" radius="0.06" material="color: blue;"></a-sphere>
+            <!-- Вершины треугольника (как на скриншоте) -->
+            <!-- Вершина A (передняя, справа на экваторе) -->
+            <a-sphere position="0.9 0 0.4" radius="0.06" material="color: #FF4444; emissive: #FF4444; emissiveIntensity: 0.5;"></a-sphere>
+            <!-- Вершина B (левая, на экваторе) -->
+            <a-sphere position="-0.7 0 0.7" radius="0.06" material="color: #44FF44; emissive: #44FF44; emissiveIntensity: 0.5;"></a-sphere>
+            <!-- Вершина C (верхняя, в северном полушарии) -->
+            <a-sphere position="0 0.85 0.5" radius="0.06" material="color: #4488FF; emissive: #4488FF; emissiveIntensity: 0.5;"></a-sphere>
             
-            <!-- Стороны треугольника (линии) -->
-            <a-entity line__ab="start: 1 0 0; end: 0 0 1; color: #FF3333" 
-                      line="start: 1 0 0; end: 0 0 1; color: #FF3333"></a-entity>
-            <a-entity line__ac="start: 1 0 0; end: 0.5 0.5 0.7; color: #33FF33"
-                      line="start: 1 0 0; end: 0.5 0.5 0.7; color: #33FF33"></a-entity>
-            <a-entity line__bc="start: 0 0 1; end: 0.5 0.5 0.7; color: #3333FF"
-                      line="start: 0 0 1; end: 0.5 0.5 0.7; color: #3333FF"></a-entity>
+            <!-- Дуги треугольника -->
+            <a-entity sphere-arc="start: 0.9 0 0.4; end: -0.7 0 0.7; color: #FF6666; radius: 1; thickness: 0.025;"></a-entity>
+            <a-entity sphere-arc="start: 0.9 0 0.4; end: 0 0.85 0.5; color: #66FF66; radius: 1; thickness: 0.025;"></a-entity>
+            <a-entity sphere-arc="start: -0.7 0 0.7; end: 0 0.85 0.5; color: #6666FF; radius: 1; thickness: 0.025;"></a-entity>
             
-            <!-- Подписи -->
-            <a-text value="A" color="red" align="center" position="1.15 -0.1 0" scale="0.3 0.3 0.3"></a-text>
-            <a-text value="B" color="green" align="center" position="-0.1 0 1.15" scale="0.3 0.3 0.3"></a-text>
-            <a-text value="C" color="blue" align="center" position="0.65 0.65 0.85" scale="0.3 0.3 0.3"></a-text>
+            <!-- Углы (секторы) - как на скриншоте -->
+            <!-- Угол A (красный) -->
+            <a-entity position="0.9 0 0.4">
+                <a-cone rotation="-90 0 0" radius-bottom="0.22" radius-top="0" height="0.35" 
+                        material="color: #FF4444; transparent: true; opacity: 0.5;"></a-cone>
+            </a-entity>
             
+            <!-- Угол B (зелёный) -->
+            <a-entity position="-0.7 0 0.7">
+                <a-cone rotation="0 0 0" radius-bottom="0.22" radius-top="0" height="0.35" 
+                        material="color: #44FF44; transparent: true; opacity: 0.5;"></a-cone>
+            </a-entity>
+            
+            <!-- Угол C (синий) -->
+            <a-entity position="0 0.85 0.5">
+                <a-cone rotation="0 0 0" radius-bottom="0.22" radius-top="0" height="0.35" 
+                        material="color: #4488FF; transparent: true; opacity: 0.5;"></a-cone>
+            </a-entity>
+            
+            <!-- Подписи вершин -->
+            <a-text value="A" color="#FF8888" align="center" position="1.05 -0.1 0.45" scale="0.3 0.3 0.3"></a-text>
+            <a-text value="B" color="#88FF88" align="center" position="-0.85 -0.1 0.85" scale="0.3 0.3 0.3"></a-text>
+            <a-text value="C" color="#8888FF" align="center" position="0 1.05 0.6" scale="0.3 0.3 0.3"></a-text>
+            
+            <!-- Пояснительный текст -->
+            <a-text value="Сферический треугольник" color="white" align="center" 
+                    position="0 -1.2 0" scale="0.45 0.45 0.45" material="color: black;"></a-text>
+            <a-text value="Сумма углов > 180°" color="#FFDD44" align="center" 
+                    position="0 -1.6 0" scale="0.35 0.35 0.35" material="color: black;"></a-text>
+            <a-text value="Геометрия Лобачевского" color="#FFAA66" align="center" 
+                    position="0 -2.0 0" scale="0.3 0.3 0.3" material="color: black;"></a-text>
+            
+            <!-- Визуализация осей (опционально, для ориентации) -->
+            <a-entity line="start: -1.2 0 0; end: 1.2 0 0; color: #888888; opacity: 0.3"></a-entity>
+            <a-entity line="start: 0 -1.2 0; end: 0 1.2 0; color: #888888; opacity: 0.3"></a-entity>
+            <a-entity line="start: 0 0 -1.2; end: 0 0 1.2; color: #888888; opacity: 0.3"></a-entity>
             
         </a-marker>
         
